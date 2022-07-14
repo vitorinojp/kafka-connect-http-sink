@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import asaintsever.httpsinkconnector.event.formatter.EventBatch;
+import asaintsever.httpsinkconnector.utils.Pair;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +60,7 @@ public class HttpEndpoint {
     public void write(Collection<SinkRecord> records) throws IOException, InterruptedException {
         for (SinkRecord record : records) {
             this.batch.add(record);
-            
+
             // We got a complete batch: send it
             if (this.batch.size() >= this.batchSize) {
                 this.sendBatch();
@@ -79,7 +81,8 @@ public class HttpEndpoint {
         HttpResponse<String> resp;
         
         try {
-            resp = this.invoke(this.eventFormatter.formatEventBatch(this.batch));
+            EventBatch eventBatch = this.eventFormatter.formatEventBatch(this.batch);
+            resp = this.invoke(eventBatch.getBatch(), eventBatch.getHeaders());
         } catch(AuthException authEx) {
             throw new HttpResponseException(this.endpoint, "Authentication error: " + authEx.getMessage());
         } finally {
@@ -100,7 +103,7 @@ public class HttpEndpoint {
         throw new HttpResponseException(this.endpoint, "Invalid response from HTTP endpoint", resp);
     }
     
-    private HttpResponse<String> invoke(byte[] data) throws AuthException, IOException, InterruptedException {       
+    private HttpResponse<String> invoke(byte[] data, List<Pair<String, String>> headers) throws AuthException, IOException, InterruptedException {
         HttpClient httpCli = HttpClient.newBuilder()
                 //.version(Version.HTTP_1_1)
                 .connectTimeout(Duration.ofMillis(this.connectTimeout))
@@ -110,12 +113,14 @@ public class HttpEndpoint {
                 .uri(URI.create(this.endpoint))
                 .timeout(Duration.ofMillis(this.readTimeout))
                 .header("Content-Type", this.contentType)
-                .POST(BodyPublishers.ofString(new String(data)))
-                ;
+                .POST(BodyPublishers.ofString(new String(data)));
         
         // Add HTTP authentication header(s)
         if (this.authenticationProvider.addAuthentication() != null)
             reqBuilder.headers(this.authenticationProvider.addAuthentication());
+
+        for (Pair<String, String> header : headers)
+            reqBuilder.header(header.getKey(), header.getValue());
         
         return httpCli.send(reqBuilder.build(), BodyHandlers.ofString());
     }

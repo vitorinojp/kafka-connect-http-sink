@@ -8,5 +8,5 @@ import asaintsever.httpsinkconnector.config.IConfigAccessor;
 
 public interface IEventFormatter extends IConfigAccessor {
    
-    byte[] formatEventBatch(List<SinkRecord> batch) throws IOException;
+    EventBatch formatEventBatch(List<SinkRecord> batch) throws IOException;
 }

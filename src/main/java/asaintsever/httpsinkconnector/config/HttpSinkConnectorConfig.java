@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import asaintsever.httpsinkconnector.event.formatter.NgsiEventFormatter;
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Importance;
@@ -31,7 +32,7 @@ public class HttpSinkConnectorConfig extends AbstractConfig {
     public static final String EVENT_MAX_BATCH_SIZE_DOC = "The maximum number of events to consume and consider before invoking the HTTP endpoint";
     
     public static final String EVENT_FORMATTER_CLASS_CONFIG = "event.formatter.class";
-    private static final String EVENT_FORMATTER_CLASS_DEFAULT = PassthroughStringEventFormatter.class.getCanonicalName();
+    private static final String EVENT_FORMATTER_CLASS_DEFAULT = NgsiEventFormatter.class.getCanonicalName();
     public static final String EVENT_FORMATTER_CLASS_DISPLAYNAME = "Event Formatter Class";
     public static final String EVENT_FORMATTER_CLASS_DOC = "The name of the class to format the event. This class should implement the interface IEventFormatter";
     public static final String EVENT_FORMATTER_CLASS_PARAM_PREFIX = "event.formatter.param.";
