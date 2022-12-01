@@ -6,9 +6,7 @@ import org.apache.kafka.connect.header.Header;
 import org.apache.kafka.connect.sink.SinkRecord;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class NgsiEventFormatter implements IEventFormatter{
 
@@ -24,7 +22,7 @@ public class NgsiEventFormatter implements IEventFormatter{
     @Override
     public EventBatch formatEventBatch(List<SinkRecord> batch) throws IOException {
         String events = "{\"actionType\":\"append\", \"entities\": [";
-        List<Pair<String, String>> headers = new ArrayList<>();
+        HashMap<String, Pair<String, String>> headers = new HashMap<>();
         boolean first = true;
 
         for(SinkRecord record : batch) {
@@ -58,8 +56,9 @@ public class NgsiEventFormatter implements IEventFormatter{
                 }catch (Exception e){
                     System.err.println(e.getMessage());
                 }
-                if (value != null)
-                    headers.add(new Pair<String, String>(header.key(), value));
+                if (value != null ){
+                    headers.put(header.key(), new Pair<String, String>(header.key(), value));
+                }
             }
         }
 
@@ -69,6 +68,6 @@ public class NgsiEventFormatter implements IEventFormatter{
 
         events = events + "]}";
 
-        return new EventBatch(events.getBytes(), headers);
+        return new EventBatch(events.getBytes(), new ArrayList<>(headers.values()));
     }
 }
